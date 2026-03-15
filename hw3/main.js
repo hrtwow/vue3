@@ -1,14 +1,18 @@
 import Pagination from './pagination.js';
+import ProductModal from './productModal.js';
 const site = "https://vue3-course-api.hexschool.io/v2";
 const apiPath = "vue3-course";
 const Loading = VueLoading.Component;
 
 const {createApp} = Vue;
 const app = createApp({
+  components:{
+    ProductModal,
+  },
   data(){
     return{
       products:[],
-      productModal: null,
+      // productModal: null,
       delProductModal: null,
       tempProduct: this.initTempProduct(),
       isLoading: true, //一進來就先全部遮住
@@ -55,10 +59,14 @@ const app = createApp({
     openModal(product){
       if(product.id){ // edit
         this.tempProduct = {... product};
-        this.productModal.show();
+        // this.productModal.show();
+        this.$refs.pModal.open();
+        // this.$refs.pModal 拿到子元件物件 productModal.js instance => 也就是整個 export default {...}
+        // 然後呼叫instance's function
       }else{  // add
         this.tempProduct = this.initTempProduct(); //每次開 modal 都先reset, 避免殘留上一次輸入的
-        this.productModal.show();
+        // this.productModal.show();
+        this.$refs.pModal.open();
       }
     },
     openDelModal(product){
@@ -77,9 +85,9 @@ const app = createApp({
         isEnabled: 1
       }
     },
-    save(){
+    save(product){
       const param = {
-        data: this.tempProduct
+        data: product
       }
 
       if(this.tempProduct.id){ // edit
@@ -87,7 +95,8 @@ const app = createApp({
           .then(res=>{
             alert(res.data.message);
             this.getProducts();
-            this.productModal.hide();
+            // this.productModal.hide();
+            this.$refs.pModal.close();
           })
           .catch(error=>{
             console.log(error);
@@ -102,7 +111,8 @@ const app = createApp({
           .then(res=>{
             alert(res.data.message);
             this.getProducts();
-            this.productModal.hide();
+            // this.productModal.hide();
+            this.$refs.pModal.close();
           })
           .catch(error=>{
             console.log(error);
@@ -139,9 +149,11 @@ const app = createApp({
     this.checkIsLogin();
 
     //建立modal物件, 初始化modal物件
-    this.productModal = new bootstrap.Modal(this.$refs.productModal);
+    // this.productModal = new bootstrap.Modal(this.$refs.productModal);
     this.delProductModal = new bootstrap.Modal(this.$refs.delProductModal);
 
+    //!ProductModal 被拆成 component, this.$refs.productModal 拿到的不是 DOM element，而是 Vue component instance
+    //! new bootstrap.Modal => 要寫在子元件
     //! 筆記
     // console.log(this.$refs);
     // const modal = document.getElementById("productModal");
@@ -149,8 +161,7 @@ const app = createApp({
     // console.log(this.$refs.productModal);
     // console.log(modal === this.$refs.productModal); // true
     
-    
-  }
+  },
 });
 app.component('Loading', Loading);
 app.component('Pagination', Pagination);
