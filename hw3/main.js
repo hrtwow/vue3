@@ -35,10 +35,10 @@ const app = createApp({
 
           })
     },
-    getProducts(){
+    getProducts(page=1){ //參數預設值
       this.isLoading = true; //換頁直接呼叫getProducts也要loading
       
-      axios.get(`${site}/api/${apiPath}/admin/products?page=${this.pagination.current_page}`)
+      axios.get(`${site}/api/${apiPath}/admin/products?page=${page}`)
           .then(res=>{
             const {products, pagination} = res.data;
             this.products = products;
@@ -125,8 +125,7 @@ const app = createApp({
           });
     },
     changePage(page){
-      this.pagination.current_page = page;
-      this.getProducts()
+      this.getProducts(page)
     }
   },
   mounted(){
