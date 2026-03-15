@@ -1,6 +1,8 @@
+import Pagination from './pagination.js';
 const site = "https://vue3-course-api.hexschool.io/v2";
 const apiPath = "vue3-course";
 const Loading = VueLoading.Component;
+
 const {createApp} = Vue;
 const app = createApp({
   data(){
@@ -10,6 +12,13 @@ const app = createApp({
       delProductModal: null,
       tempProduct: this.initTempProduct(),
       isLoading: true, //一進來就先全部遮住
+      pagination: {
+        total_pages: 1,
+        current_page: 1,
+        has_pre: false,
+        has_next: false,
+        category: "",
+      },
     }
   },
   methods:{
@@ -27,10 +36,13 @@ const app = createApp({
           })
     },
     getProducts(){
-      axios.get(`${site}/api/${apiPath}/admin/products`)
+      this.isLoading = true; //換頁直接呼叫getProducts也要loading
+      
+      axios.get(`${site}/api/${apiPath}/admin/products?page=${this.pagination.current_page}`)
           .then(res=>{
-            const {products} = res.data;
+            const {products, pagination} = res.data;
             this.products = products;
+            this.pagination = pagination;
           })
           .catch(error=>{
 
@@ -111,6 +123,10 @@ const app = createApp({
             console.log(error);
             const {data} = error;
           });
+    },
+    changePage(page){
+      this.pagination.current_page = page;
+      this.getProducts()
     }
   },
   mounted(){
@@ -138,4 +154,5 @@ const app = createApp({
   }
 });
 app.component('Loading', Loading);
+app.component('Pagination', Pagination);
 app.mount('#app');

@@ -12,7 +12,7 @@
 
   <body>
     <div id="app">
-      <loading 
+      <loading
         :active="isLoading"
         background-color="rgba(0,0,0,0.7)"
       >
@@ -61,6 +61,8 @@
             </tr>
           </tbody>
         </table>
+        <!-- Pagination -->
+        <pagination :pagination="pagination" @change-page="changePage"></pagination>
       </div>
       <!-- Modal -->
       <div id="productModal" ref="productModal" class="modal fade" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
@@ -197,7 +199,7 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue-loading-overlay@6.0.6/dist/index.min.js"></script>
 
-    <script src="./main.js"></script>
+    <script type="module" src="./main.js"></script>
   </body>
 
 </html>
