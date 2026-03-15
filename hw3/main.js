@@ -1,7 +1,7 @@
-import { createApp} from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
 const site = "https://vue3-course-api.hexschool.io/v2";
 const apiPath = "vue3-course";
-
+const Loading = VueLoading.Component;
+const {createApp} = Vue;
 const app = createApp({
   data(){
     return{
@@ -9,14 +9,13 @@ const app = createApp({
       productModal: null,
       delProductModal: null,
       tempProduct: this.initTempProduct(),
+      isLoading: true, //一進來就先全部遮住
     }
   },
   methods:{
     checkIsLogin(){
       axios.post(`${site}/api/user/check`)
           .then(res=>{
-            // console.log(res);
-            
             //證實有登入, 才可顯示產品列表
             this.getProducts();
           })
@@ -35,6 +34,9 @@ const app = createApp({
           })
           .catch(error=>{
 
+          })
+          .finally(()=>{
+            this.isLoading = false; //撈完資料才移除loading
           })
           
     },
@@ -133,7 +135,7 @@ const app = createApp({
     // console.log(modal === this.$refs.productModal); // true
     
     
-    
-    
   }
-}).mount('#app');
+});
+app.component('Loading', Loading);
+app.mount('#app');
