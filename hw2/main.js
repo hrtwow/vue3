@@ -41,17 +41,16 @@ createApp({
     getProducts(){
       axios.get(`${baseUrl}/api/${apiPath}/products`)
       .then(res=>{
-        // console.log(res.data);
         this.products = res.data.products;
       })
     },
   },
   mounted(){
+    //NOTE 從 cookie 裡取出 hexToken 的 value , 然後設定axios的「預設 HTTP Header」, 讓之後在"同一個頁面"所有API request皆自動帶上 Authorization header
+    //NOTE 因為之後的API都需要登入驗證才可以呼叫使用
     const token = document.cookie.split('; ').find(row => row.startsWith('hexToken='))?.split('=')[1];
-
-    // axios的全域設定： 之後所有 API request 皆自動加上 Authorization: token 這個 header
-    //'Authorization' 是 header名稱 , token 是 header的值
     axios.defaults.headers.common['Authorization'] = token;
+    
     this.checkIsLogin();
   }
 }).mount('#app');
