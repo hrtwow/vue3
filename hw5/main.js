@@ -2,16 +2,33 @@ const { createApp } = Vue;
 const site = "https://vue3-course-api.hexschool.io/v2";
 const apiPath = "vue3-course";
 const Loading = VueLoading.Component;
+/**定義規則，zh_TW.json 也一定要有對應 key  */
+VeeValidate.defineRule('mustFill', VeeValidateRules.required);
+// VeeValidate.defineRule('required', VeeValidateRules.required);
+VeeValidate.defineRule('myEmail', VeeValidateRules.email);
+//加入CDN版本的全部規則，上面是只加入特定幾個規則的寫法
+Object.keys(VeeValidateRules).forEach(rule => {
+  if (rule !== 'default') {
+    VeeValidate.defineRule(rule, VeeValidateRules[rule]);
+  }
+});
+
+VeeValidateI18n.loadLocaleFromURL('./zh_TW.json');// 讀取外部的資源
+VeeValidate.configure({
+  generateMessage: VeeValidateI18n.localize('zh_TW'),
+  validateOnInput: true, // 調整為：輸入文字時，就立即進行驗證
+});
+
 
 /** modal 元件 */
 const userModal = {
-  props:{
+  props: {
     tempProduct: Object,
   },
-  emits:['addToCart'],
-  watch:{
-    tempProduct(newVal){
-      if(newVal){
+  emits: ['addToCart'],
+  watch: {
+    tempProduct(newVal) {
+      if (newVal) {
         // console.log('tempProduct = ',this.tempProduct);
       }
     },
@@ -23,27 +40,28 @@ const userModal = {
     return {
       modal: null,
       num: 0,          //這邊有沒有寫都沒差，因為 open() 會回到預設值1
+
     }
   },
   template: '#userProductModal',
-  methods:{
-    open(){
+  methods: {
+    open() {
       this.num = 1;       //由子元件控制自己的data
       this.modal.show();
     },
-    close(){
+    close() {
       this.modal.hide();
     },
-    add(id, num){
+    add(id, num) {
       // console.log(id, num);
-      
-      this.$emit('addToCart',id, num);
+
+      this.$emit('addToCart', id, num);
     }
   },
   mounted() {
     this.modal = new bootstrap.Modal(this.$refs.modal);
     // this.modal.show()
-    
+
   }
 };
 
@@ -56,22 +74,32 @@ const app = createApp({
   data() {
     return {
       products: [],
-      p:{},
+      p: {},
       isLoading: false,
       cartLoading: false,
-      cart:{
+      cart: {
         carts: [],
         final_total: 0, //折扣價 final_total 是套完優惠券的價格
         total: 0,       //總價
       },
-      btnStatus:{
+      btnStatus: {
         addToCartLoading: '', //放該筆id
         updateQtyLoading: '', //放該筆id
       },
-
+      user: {
+        email: '',
+        name: '',
+        tel: '',
+        region: '',
+        message: '',
+      }
     }
   },
   methods: {
+    isPhoneValid(value) {
+      const phoneNumber = /^(09)[0-9]{8}$/
+      return phoneNumber.test(value) ? true : '請輸入正確的手機號碼格式'
+    },
     getProducts(page = 1) {
       // this.isLoading = true;
 
@@ -91,111 +119,116 @@ const app = createApp({
         })
 
     },
-    openModal(product){
+    openModal(product) {
       this.p = product;
       // console.log(this.p);
-      
+
       this.$refs.pModal.open();
     },
-    addToCart(productId, qty){ //加到購物車會呼叫API
+    addToCart(productId, qty) { //加到購物車會呼叫API
       console.log(productId, qty);
-      
+
       const param = {
-        data:{
+        data: {
           product_id: productId,
           qty,
         }
       }
 
       //局部loading，先做避免重複呼叫API就好
-      this.btnStatus.addToCartLoading = productId ; //等於該筆ID, 避免連續按加入購物車, 其實也不會怎樣..
+      this.btnStatus.addToCartLoading = productId; //等於該筆ID, 避免連續按加入購物車, 其實也不會怎樣..
       // this.cartLoading = true;                    //下方table要鎖住
 
       axios.post(`${site}/api/${apiPath}/cart`, param)
-          .then(res =>{
-            console.log(res);
-            
-            this.btnStatus.addToCartLoading = ''; //解除loading
-            // this.cartLoading = false;
-            this.$refs.pModal.close();
+        .then(res => {
+          console.log(res);
 
-            //顯示購物車，呼叫API
-            this.getCart();
-          })
+          this.btnStatus.addToCartLoading = ''; //解除loading
+          // this.cartLoading = false;
+          this.$refs.pModal.close();
+
+          //顯示購物車，呼叫API
+          this.getCart();
+        })
     },
-    getCart(){
+    getCart() {
       axios.get(`${site}/api/${apiPath}/cart`)
-          .then(res =>{
-            this.cart = res.data.data;
-            console.log(this.cart);
-          })
+        .then(res => {
+          this.cart = res.data.data;
+          console.log(this.cart);
+        })
     },
     /** 調整購物車數量 */
-    changeCartQty(item){
+    changeCartQty(item) {
       // console.log(item);//item.id是購物車id
-      
+
       const param = {
-        data:{
+        data: {
           product_id: item.product_id,
           qty: item.qty
         }
       }
 
       //局部loading
-      this.btnStatus.updateQtyLoading = item.id ; //等於該筆購物車ID, 避免連續按上下btn
+      this.btnStatus.updateQtyLoading = item.id; //等於該筆購物車ID, 避免連續按上下btn
       // this.cartLoading = true;                    //下方table也要鎖住
 
       axios.put(`${site}/api/${apiPath}/cart/${item.id}`, param)
-          .then(res =>{
-            console.log(res);
-            
-            alert(res.data.message)
-            this.btnStatus.updateQtyLoading = ''; //解除loading
-            // this.cartLoading = false;
-            //顯示購物車，呼叫API
-            this.getCart();
-          })
+        .then(res => {
+          console.log(res);
+
+          alert(res.data.message)
+          this.btnStatus.updateQtyLoading = ''; //解除loading
+          // this.cartLoading = false;
+          //顯示購物車，呼叫API
+          this.getCart();
+        })
     },
-    onQtyInput(e, item){  //其實實務上不建議使用input, 會用下拉選單, 避免檢核太難做
+    onQtyInput(e, item) {  //其實實務上不建議使用input, 會用下拉選單, 避免檢核太難做
       let val = Number(e.target.value);
-      
+
       // 統一處理所有情況
       if (!val || val < 1) val = 1; //空字串或0 => !val = true
 
       item.qty = Math.floor(val);  //正小數只取整數 e.g., 2.2 => 2
     },
-    remove(id){
+    remove(id) {
       const isConfirm = confirm('確定要刪除嗎？');
       // console.log(isConfirm);
-      
+
       if (!isConfirm) return; // 使用者按取消就直接結束
 
       axios.delete(`${site}/api/${apiPath}/cart/${id}`)
-          .then(res =>{
-            console.log(res);
-            
-            alert(res.data.message)
+        .then(res => {
+          console.log(res);
 
-            //顯示購物車，呼叫API
-            this.getCart();
-          })
+          alert(res.data.message)
+
+          //顯示購物車，呼叫API
+          this.getCart();
+        })
     },
-    removeAll(){
+    removeAll() {
       const isConfirm = confirm('確定要全部刪除嗎？');
       // console.log(isConfirm);
-      
+
       if (!isConfirm) return; // 使用者按取消就直接結束
 
       axios.delete(`${site}/api/${apiPath}/carts`)
-          .then(res =>{
-            console.log(res);
-            
-            alert(res.data.message)
+        .then(res => {
+          console.log(res);
 
-            //顯示購物車，呼叫API
-            this.getCart();
-          })
-    }
+          alert(res.data.message)
+
+          //顯示購物車，呼叫API
+          this.getCart();
+        })
+    },
+    onSubmit() { //檢核通過才會進來
+      console.log('送出訂單', this.user);
+      // call api
+      
+    },
   },
   mounted() {
     // console.log('aaa');
@@ -210,6 +243,9 @@ const app = createApp({
   }
 });
 app.component('Loading', Loading);
+app.component('VForm', VeeValidate.Form);
+app.component('VField', VeeValidate.Field);
+app.component('ErrorMessage', VeeValidate.ErrorMessage);
 app.mount('#app');
 
 
